@@ -186,14 +186,6 @@ This project was reconstructed and ported using the following upstream codebases
 
 The projected-space filtering implementation in Unity references Yusuke Tokuyoshi and Anton Kaplanyan's *Stable Geometric Specular Antialiasing with Projected-Space NDF Filtering*.
 
-## Notes for contributors
-
-- Keep material property names stable where possible so existing `vr_standard`-style materials remain easy to convert.
-- Preserve the desktop/mobile feature split unless a feature has a proven Quest-safe implementation.
-- When changing packed-texture layouts, update both shader keywords/channel extraction and this README table.
-- When changing alpha behavior, verify Forward, DepthOnly, DepthNormals, and ShadowCaster consistency.
-- When changing baked lighting, verify static lightmaps, dynamic lightmaps, directional lightmaps, SH probes, Meta, and BakedRaytrace paths.
-
 ## Status
 
-The shader is under active reconstruction and should be validated in the target SLZ-URP project after changes. The files in this repository are source shader/editor files; Unity-generated cache and Library content should not be committed.
+- The shader is provided "as is" and will not be actively supported. - MegaSonic64
