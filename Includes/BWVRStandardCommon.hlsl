@@ -114,9 +114,14 @@ inline half3 BW_SafeNormalize(half3 v)
 
 inline half4 BW_ScreenSpaceDither(float2 screenPos)
 {
-    half3 dither = dot(float2(171.0, 231.0), screenPos + _Time.y.xx).xxx;
-    dither = frac(dither / half3(103.0, 71.0, 97.0)) - half3(0.5, 0.5, 0.5);
-    return half4(dither.rgbr) * (half(0.375) / half(255.0));
+    // Keep the screen-space hash in FP32. On Vulkan, `half` may be true FP16;
+    // dot(171,231) against pixel-space SV_POSITION easily exceeds 65504,
+    // producing INF -> frac(INF) -> NaN and black/invalid fragments over most
+    // of the screen. Only narrow low-coordinate regions (typically bottom-left)
+    // survive, which matches the observed Vulkan failure exactly.
+    float hash = dot(float2(171.0, 231.0), screenPos + _Time.y.xx);
+    float3 dither = frac(hash.xxx / float3(103.0, 71.0, 97.0)) - float3(0.5, 0.5, 0.5);
+    return (half4)float4(dither.r, dither.g, dither.b, dither.r) * (half(0.375) / half(255.0));
 }
 
 inline float2 BW_WorldAlignedUV(float3 positionWS)
