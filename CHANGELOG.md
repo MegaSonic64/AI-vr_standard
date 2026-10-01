@@ -1,49 +1,34 @@
 # Changelog
 
-## Current revision
+## Revision 2 — 2026-09-30
 
-### Naming and repository documentation
+### Shared
 
-- Renamed the Unity shader menu path from `SLZ/BONEWORKS/vr_standard V1` to `SLZ/Valve/ai_vr_standard`.
-- Added a GitHub-ready `README.md` covering requirements, installation, features, renderer integration, desktop/mobile behavior, texture packing, baking, limitations, and upstream references.
-- Added upstream source/reference links for SLZ Custom URP, `zero_lab_renderer`, and Unity Graphics' projected-space geometric specular AA implementation.
+- Switched desktop geometric Spec AA to LitMAS' cheaper Valve-derived `SLZGeometricSpecularAA` implementation.
+- Preserved the original BONEWORKS retroreflective exclusion from geometric roughness filtering.
+- Retained the FP32 Vulkan screen-space dither hash fix to prevent FP16 overflow/NaN black-screen failures.
 
-### Rendering and lighting
+### ai_vr_standard
 
-- Added SLZ screen-space reflection integration on desktop.
-- Added SSR temporal accumulation control.
-- Forced SSR temporal accumulation to `0` for AlphaBlend, Glass, Additive, Mod2x, and Multiply modes.
-- Added projected-space geometric specular anti-aliasing on supported desktop specular workflows using the geometric normal.
-- Added SLZ static, dynamic, and directional lightmap support.
-- Fixed dynamic-lightmap-only variants so they use baked GI instead of incorrectly falling back to SH.
-- Prevented SH-L1 fake specular from being added on top of dynamic lightmaps.
-- Added SLZ Meta and BakedRaytrace integration.
-- Added SLZ volumetric fog support.
+- Fixed dynamic-lightmap-only evaluation so it no longer calls `SLZGetLightmapLighting`, which unconditionally samples the static lightmap first.
+- Kept static + dynamic lightmap support for the general-purpose shader.
+- Preserved the working mobile policy: one per-pixel main light, additional point/spot lights at vertices.
+- Kept the updated inspector without Unity's legacy "Mobile shaders" warning and with Quest alpha/transparent cost warnings.
 
-### Material features
+### GibSkinMAS
 
-- Added texture packing modes: MAES, RMA, MAS, MASK, MRA, ORM, and Alloy.
-- Corrected desktop parallax tangent-space projection.
-- Kept parallax fully compiled out on mobile.
-- Preserved BRDF LUT, fluorescence, anisotropic, retroreflective, detail, color-shift, emission, AO, and world-aligned mapping workflows.
+- Removed static/dynamic lightmap variants and lightmap UV interpolation.
+- Removed `Meta` and `BakedRaytrace` passes; GibSkinMAS is now explicitly a dynamic skinned-mesh shader.
+- Uses SH/light probes for indirect diffuse and BONEWORKS SH-L1 fake specular fallback.
+- Uses LitMAS/Posespace `VertexLighting()` for mobile RGB additional lights.
+- Compiles the extra fluorescence-alpha vertex-light loop only when fluorescence is enabled.
+- Default SSR temporal accumulation changed to `0` for skinned meshes while keeping the control available.
+- Optimized hit distance by comparing squared ellipsoid distances and taking one final square root.
+- Early-outs the hit-mask Vivid-Light calculation before three triplanar `_BloodyTex` samples when the mask is already fully blood or fully skin.
+- Avoids sampling both blood and skin albedo/normal/MAS stacks when the hit mask is at a resolved endpoint.
+- Retained the FP32 Vivid-Light endpoint fix and FP32 screen-dither hash fix for Vulkan.
 
-### Alpha and shadows
+## Revision 1
 
-- Removed AlphaToCoverage / `AlphaToMask` behavior.
-- AlphaTest now uses a hard `clip(alpha - _Cutoff)` path.
-- Added alpha-clipped shadow support for Render Backfaces through a dedicated shadow-cull state.
-- Kept other shadow-culling behavior consistent with the intended original shader behavior.
-
-### Mobile / Quest
-
-- One per-pixel main light with additional lights evaluated at vertex level.
-- Aggressive half-precision material and lighting math where practical.
-- Uses SLZ mobile-safe GGX paths.
-- SSR, parallax, projected geometric specular AA, probe blending, and box projection remain disabled on mobile.
-
-## Earlier V1 / V1.2 reconstruction work
-
-- Ported the BONEWORKS-era `vr_standard` material model from Unity Built-in rendering to SLZ-URP 2021.
-- Replaced old Valve custom renderer light/shadow infrastructure with SLZ-URP lighting and shadow APIs.
-- Added native Forward, DepthOnly, DepthNormals, ShadowCaster, Meta, and BakedRaytrace passes.
-- Restored original render modes, specular workflows, material keywords, detail modes, world-aligned mapping, fluorescence, parallax, and packed-texture behavior.
+- Initial SLZ-URP 2021 reconstruction/port work for `ai_vr_standard` and `GibSkinMAS`.
+- Replaced legacy BONEWORKS renderer light/shadow plumbing with SLZ-URP infrastructure while retaining BONEWORKS material behavior.
