@@ -51,3 +51,8 @@
 
 - Initial SLZ-URP 2021 reconstruction/port work for `ai_vr_standard` and `GibSkinMAS`.
 - Replaced legacy BONEWORKS renderer light/shadow plumbing with SLZ-URP infrastructure while retaining BONEWORKS material behavior.
+
+## 3.0.1 - Git/UPM ShaderGUI Fix
+- Added Editor-only assembly definitions for `ai_vr_standard` and `GibSkinMAS` so their ShaderGUI scripts compile when installed through Unity Package Manager from a Git URL.
+- Made `UnityEditor.BoneworksVRStandardGUI` public for reliable CustomEditor discovery across the package Editor assembly.
+- No rendering/HLSL behavior changed in this patch.

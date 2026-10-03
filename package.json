@@ -1,8 +1,8 @@
 {
   "name": "com.slz-community.boneworks-shader-ports",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "displayName": "SLZ-URP 2021 BONEWORKS Shader Ports",
-  "description": "BONEWORKS-era shader ports and reconstructions for Unity 2021.3.16f1 using Stress Level Zero's Custom URP 2021 renderer. Includes ai_vr_standard and GibSkinMAS.",
+  "description": "BONEWORKS-era shader ports and reconstructions for Unity 2021.3.16f1 using Stress Level Zero's Custom URP 2021 renderer. Includes ai_vr_standard and GibSkinMAS. Git/UPM-safe editor assemblies included.",
   "unity": "2021.3",
   "keywords": [
     "boneworks",

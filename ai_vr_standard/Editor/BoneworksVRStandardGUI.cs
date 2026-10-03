@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace UnityEditor
 {
-internal class BoneworksVRStandardGUI : ShaderGUI
+public class BoneworksVRStandardGUI : ShaderGUI
 {
 	public enum BlendMode
 	{
