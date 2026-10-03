@@ -1,24 +1,15 @@
 {
-  "name": "com.megasonic.boneworksaishaders",
-  "description": "SLZ-URP 2021 BONEWORKS AI Shader Ports",
-  "version": "3.0",
-  "unity": "2021.2",
-  "displayName": "BONEWORKS AI Shaders",
-  "hideInEditor": false,
-  },
+  "name": "com.slz-community.boneworks-shader-ports",
+  "version": "3.0.0",
+  "displayName": "SLZ-URP 2021 BONEWORKS Shader Ports",
+  "description": "BONEWORKS-era shader ports and reconstructions for Unity 2021.3.16f1 using Stress Level Zero's Custom URP 2021 renderer. Includes ai_vr_standard and GibSkinMAS.",
+  "unity": "2021.3",
   "keywords": [
-    "graphics",
-    "shaders",
-    "rendering",
-    "mobile",
-  ],
-    "repository": {
-    "type": "git",
-    "url": "https://github.com/MegaSonic64/AI-vr_standard.git"
-	},
-	  "author": {
-    "name": "MegaSonic64",
-    "email": "None",
-    "url": "None"
-  },
+    "boneworks",
+    "slz",
+    "urp",
+    "shader",
+    "pbr",
+    "litmas"
+  ]
 }
