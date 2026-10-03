@@ -56,7 +56,8 @@ internal class BoneworksVRStandardGUI : ShaderGUI
             Multiply2x,
             Multiply,
             Add,
-            Lerp
+            Lerp,
+            HDRP
         }
 
 
@@ -100,6 +101,7 @@ internal class BoneworksVRStandardGUI : ShaderGUI
         public static GUIContent emissionFalloffText = new GUIContent("Falloff", "Emission Falloff");
 		public static GUIContent detailMaskText = new GUIContent("Detail Mask", "Mask for Secondary Maps (A)");
 		public static GUIContent detailAlbedoText = new GUIContent("Detail Albedo", "Detail Albedo (RGB) multiplied by 2");
+        public static GUIContent detailHDRPText = new GUIContent("HDRP Detail Map", "LitMAS/HDRP packing: R = albedo overlay, G = normal Y, B = smoothness multiplier, A = normal X");
 		public static GUIContent detailNormalMapText = new GUIContent("Detail Normal", "Detail Normal Map");
         public static GUIContent castShadowsText = new GUIContent("Cast shadows", "");
 		public static GUIContent receiveShadowsText = new GUIContent( "Receive Shadows", "" );
@@ -193,6 +195,9 @@ internal class BoneworksVRStandardGUI : ShaderGUI
     MaterialProperty offsetUnits = null;
     MaterialProperty ssrOff = null;
     MaterialProperty ssrTemporalMul = null;
+    MaterialProperty mod2xMultiplier = null;
+    MaterialProperty mod2xAlpha = null;
+    MaterialProperty specularHorizonOcclusion = null;
 
 	MaterialEditor m_MaterialEditor;
 	ColorPickerHDRConfig m_ColorPickerHDRConfig = new ColorPickerHDRConfig(0f, 99f, 1/99f, 3f);
@@ -267,6 +272,9 @@ internal class BoneworksVRStandardGUI : ShaderGUI
         offsetUnits = FindProperty("_OffsetUnits", props);
         ssrOff = FindProperty("_SSROff", props, false);
         ssrTemporalMul = FindProperty("_SSRTemporalMul", props, false);
+        mod2xMultiplier = FindProperty("_Multiplier", props, false);
+        mod2xAlpha = FindProperty("_alpha", props, false);
+        specularHorizonOcclusion = FindProperty("_SpecularHorizonOcclusion", props, false);
         
 	}
 
@@ -283,6 +291,15 @@ internal class BoneworksVRStandardGUI : ShaderGUI
         // Avoid ShaderGUI.OnGUI(), which injects Unity's legacy
         // "consider switching to a Mobile shader" performance warning.
         m_MaterialEditor.RenderQueueField();
+        if (specularHorizonOcclusion != null)
+        {
+            EditorGUI.showMixedValue = specularHorizonOcclusion.hasMixedValue;
+            EditorGUI.BeginChangeCheck();
+            bool horizonEnabled = EditorGUILayout.Toggle("SLZ Specular Horizon Occlusion", specularHorizonOcclusion.floatValue > 0.5f);
+            if (EditorGUI.EndChangeCheck())
+                specularHorizonOcclusion.floatValue = horizonEnabled ? 1.0f : 0.0f;
+            EditorGUI.showMixedValue = false;
+        }
         m_MaterialEditor.EnableInstancingField();
         m_MaterialEditor.DoubleSidedGIField();
 
@@ -364,8 +381,14 @@ internal class BoneworksVRStandardGUI : ShaderGUI
 			GUILayout.Label( Styles.primaryMapsText, EditorStyles.boldLabel );
 			DoAlbedoArea( material );
 
+            if ((BlendMode)material.GetFloat("_Mode") == BlendMode.Mod2x)
+            {
+                if (mod2xMultiplier != null)
+                    m_MaterialEditor.ShaderProperty(mod2xMultiplier, "Multiplier");
+                if (mod2xAlpha != null)
+                    m_MaterialEditor.ShaderProperty(mod2xAlpha, "Alpha");
+            }
 
-            
 			if ( !bUnlit )
 			{
                 DoFluorescenceArea(material);
@@ -441,13 +464,19 @@ internal class BoneworksVRStandardGUI : ShaderGUI
 
                 m_MaterialEditor.TexturePropertySingleLine(Styles.detailMaskText, detailMask);
 
-                m_MaterialEditor.TexturePropertySingleLine( Styles.detailAlbedoText, detailAlbedoMap );
-			if ( !bUnlit )
-			{
-				m_MaterialEditor.TexturePropertySingleLine( Styles.detailNormalMapText, detailNormalMap, detailNormalMapScale );
-			}
-			m_MaterialEditor.TextureScaleOffsetProperty( detailAlbedoMap );
-			m_MaterialEditor.ShaderProperty( uvSetSecondary, Styles.uvSetLabel.text );
+                bool hdrpDetailMode = (DetailBlendMode)material.GetInt("_DetailMode") == DetailBlendMode.HDRP;
+                if (hdrpDetailMode)
+                {
+                    m_MaterialEditor.TexturePropertySingleLine(Styles.detailHDRPText, detailAlbedoMap);
+                }
+                else
+                {
+                    m_MaterialEditor.TexturePropertySingleLine(Styles.detailAlbedoText, detailAlbedoMap);
+                    if (!bUnlit)
+                        m_MaterialEditor.TexturePropertySingleLine(Styles.detailNormalMapText, detailNormalMap, detailNormalMapScale);
+                }
+                m_MaterialEditor.TextureScaleOffsetProperty(detailAlbedoMap);
+                m_MaterialEditor.ShaderProperty(uvSetSecondary, Styles.uvSetLabel.text);
 
                 //Advanced Options
 
@@ -1018,37 +1047,21 @@ internal class BoneworksVRStandardGUI : ShaderGUI
 
         public static void SetupDetailBlendMode(Material material, DetailBlendMode detailMode)
         {
+            material.DisableKeyword("_DETAIL_MULX2");
+            material.DisableKeyword("_DETAIL_MUL");
+            material.DisableKeyword("_DETAIL_ADD");
+            material.DisableKeyword("_DETAIL_LERP");
+            material.DisableKeyword("_DETAIL_HDRP");
+
             switch (detailMode)
             {
-               case DetailBlendMode.Multiply2x:
-                    material.EnableKeyword("_DETAIL_MULX2");
-                    material.DisableKeyword("_DETAIL_MUL");
-                    material.DisableKeyword("_DETAIL_ADD");
-                    material.DisableKeyword("_DETAIL_LERP");
-               break;
-               case DetailBlendMode.Multiply:
-                    material.DisableKeyword("_DETAIL_MULX2");
-                    material.EnableKeyword("_DETAIL_MUL");
-                    material.DisableKeyword("_DETAIL_ADD");
-                    material.DisableKeyword("_DETAIL_LERP");
-               break;
-               case DetailBlendMode.Add:
-                    material.DisableKeyword("_DETAIL_MULX2");
-                    material.DisableKeyword("_DETAIL_MUL");
-                    material.EnableKeyword("_DETAIL_ADD");
-                    material.DisableKeyword("_DETAIL_LERP");
-                break;
-                case DetailBlendMode.Lerp:
-                    material.DisableKeyword("_DETAIL_MULX2");
-                    material.DisableKeyword("_DETAIL_MUL");
-                    material.DisableKeyword("_DETAIL_ADD");
-                    material.EnableKeyword("_DETAIL_LERP");
-                break;
+                case DetailBlendMode.Multiply2x: material.EnableKeyword("_DETAIL_MULX2"); break;
+                case DetailBlendMode.Multiply:   material.EnableKeyword("_DETAIL_MUL");   break;
+                case DetailBlendMode.Add:        material.EnableKeyword("_DETAIL_ADD");   break;
+                case DetailBlendMode.Lerp:       material.EnableKeyword("_DETAIL_LERP");  break;
+                case DetailBlendMode.HDRP:       material.EnableKeyword("_DETAIL_HDRP");  break;
             }
-
-
         }
-
 
 
 	static bool ShouldEmissionBeEnabled (Color color)
@@ -1062,7 +1075,9 @@ internal class BoneworksVRStandardGUI : ShaderGUI
 	{
 		// Note: keywords must be based on Material value not on MaterialProperty due to multi-edit & material animation
 		// (MaterialProperty value might come from renderer material property block)
-		SetKeyword (material, "_NORMALMAP", material.GetTexture ("_BumpMap") || material.GetTexture ("_DetailNormalMap"));
+        DetailBlendMode detailMode = (DetailBlendMode)material.GetInt("_DetailMode");
+        bool hasDetailNormal = detailMode == DetailBlendMode.HDRP || material.GetTexture("_DetailNormalMap") != null;
+        SetKeyword(material, "_NORMALMAP", material.GetTexture("_BumpMap") != null || hasDetailNormal);
 
 		SpecularMode specularMode = ( SpecularMode )material.GetInt( "_SpecularMode" );
         VertexMode vertexMode = (VertexMode)material.GetInt("_VertexMode");
@@ -1137,6 +1152,8 @@ internal class BoneworksVRStandardGUI : ShaderGUI
         SetKeyword(material, "S_RENDER_BACKFACES", material.GetInt("g_bRenderBackfaces") == 1);
         SetKeyword(material, "D_CASTSHADOW", material.GetInt("g_bCastShadows") == 1);
         SetKeyword(material, "_NO_SSR", material.HasProperty("_SSROff") && material.GetFloat("_SSROff") != 0.0f);
+        bool mod2xAlphaEnabled = (BlendMode)material.GetInt("_Mode") == BlendMode.Mod2x && material.HasProperty("_alpha") && material.GetFloat("_alpha") > 0.5f;
+        SetKeyword(material, "_ALPHA_ON", mod2xAlphaEnabled);
 
 		if ( material.IsKeywordEnabled( "S_RENDER_BACKFACES" ) )
 		{

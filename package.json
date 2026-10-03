@@ -1,0 +1,24 @@
+{
+  "name": "com.megasonic.boneworksaishaders",
+  "description": "SLZ-URP 2021 BONEWORKS AI Shader Ports",
+  "version": "3.0",
+  "unity": "2021.2",
+  "displayName": "BONEWORKS AI Shaders",
+  "hideInEditor": false,
+  },
+  "keywords": [
+    "graphics",
+    "shaders",
+    "rendering",
+    "mobile",
+  ],
+    "repository": {
+    "type": "git",
+    "url": "https://github.com/MegaSonic64/AI-vr_standard.git"
+	},
+	  "author": {
+    "name": "MegaSonic64",
+    "email": "None",
+    "url": "None"
+  },
+}

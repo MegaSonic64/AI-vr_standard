@@ -1,5 +1,14 @@
 # Changelog — GibSkinMAS
 
+## Revision 3 — 2026-10-02
+
+### Specular horizon occlusion
+
+- Added **SLZ Specular Horizon Occlusion** toggle directly below Render Queue.
+- Defaults on.
+- Applies SLZ's horizon-occlusion function to reflection-probe and SSR contributions using the geometric normal.
+- Added an editor-only `GibSkinMASGUI` solely to place the control in the requested inspector location; no runtime script dependency was introduced.
+
 ## Revision 2 — 2026-09-30
 
 ### Lighting / mobile

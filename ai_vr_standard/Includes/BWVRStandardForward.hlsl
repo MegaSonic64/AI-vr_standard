@@ -120,13 +120,27 @@ half4 BWFrag(Varyings input, FRONT_FACE_TYPE frontFace : FRONT_FACE_SEMANTIC) : 
     half4 baseColor = baseSample * _Color;
     half3 albedo = baseColor.rgb;
     half baseAlpha = baseColor.a;
+    // BONELAB SLZ/Mod2x always keeps vertex alpha in the alpha mask, even when RGB vertex colors are disabled.
+    half mod2xSourceAlpha = baseAlpha * input.color.a;
 
+#if defined(_DETAIL_HDRP)
+    // LitMAS/HDRP packed detail map: R albedo overlay, G normal Y, B smoothness, A normal X.
+    // Sample once and reuse for albedo, normal and smoothness.
+    half hdrpDetailMask = BW_DetailMask(baseUV);
+    half4 hdrpDetailMap = SAMPLE_TEXTURE2D(_DetailAlbedoMap, sampler_DetailAlbedoMap, detailUV);
+    albedo = BW_ApplyHDRPDetailAlbedo(albedo, hdrpDetailMap, hdrpDetailMask);
+#else
     albedo = BW_ApplyDetailAlbedo(albedo, baseUV, detailUV);
+#endif
 
     half3 normalTS = half3(0,0,1);
 #if defined(_NORMALMAP) && !defined(S_UNLIT)
     normalTS = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, baseUV), _BumpScale);
-    normalTS = BW_ApplyDetailNormal(normalTS, baseUV, detailUV);
+    #if defined(_DETAIL_HDRP)
+        normalTS = BW_ApplyHDRPDetailNormal(normalTS, hdrpDetailMap, hdrpDetailMask);
+    #else
+        normalTS = BW_ApplyDetailNormal(normalTS, baseUV, detailUV);
+    #endif
 #endif
 
     half3 normalWS = geometricNormalWS;
@@ -232,6 +246,9 @@ half4 BWFrag(Varyings input, FRONT_FACE_TYPE frontFace : FRONT_FACE_SEMANTIC) : 
             smoothness = packed.a;
         #endif
     #endif
+    #if defined(_DETAIL_HDRP)
+        smoothness = BW_ApplyHDRPDetailSmoothness(smoothness, hdrpDetailMap, hdrpDetailMask);
+    #endif
     BW_AlbedoSpecularFromMetallic(albedo, metallic, reflectance);
     perceptualRoughness = half(1.0) - saturate(smoothness * _SpecMod);
 
@@ -239,6 +256,9 @@ half4 BWFrag(Varyings input, FRONT_FACE_TYPE frontFace : FRONT_FACE_SEMANTIC) : 
     half4 specGloss = half4(_SpecColor.rgb, _Glossiness);
     #if defined(_SPECGLOSSMAP)
         specGloss = SAMPLE_TEXTURE2D(_SpecGlossMap, sampler_SpecGlossMap, baseUV);
+    #endif
+    #if defined(_DETAIL_HDRP)
+        specGloss.a = BW_ApplyHDRPDetailSmoothness(specGloss.a, hdrpDetailMap, hdrpDetailMask);
     #endif
     specGloss.rgb = specGloss.rgb * g_flReflectanceScale + g_flReflectanceBias;
     reflectance = specGloss.rgb;
@@ -254,6 +274,9 @@ half4 BWFrag(Varyings input, FRONT_FACE_TYPE frontFace : FRONT_FACE_SEMANTIC) : 
         anisoRotation = frac(a.z + _AnisotropicRotation);
         anisoRatio = a.w;
     #endif
+    #if defined(_DETAIL_HDRP)
+        smoothness = BW_ApplyHDRPDetailSmoothness(smoothness, hdrpDetailMap, hdrpDetailMask);
+    #endif
     BW_AlbedoSpecularFromMetallic(albedo, metallic, reflectance);
     perceptualRoughness = half(1.0) - saturate(smoothness * _SpecMod);
 
@@ -264,6 +287,9 @@ half4 BWFrag(Varyings input, FRONT_FACE_TYPE frontFace : FRONT_FACE_SEMANTIC) : 
         half4 mr = SAMPLE_TEXTURE2D(_MetallicGlossMap, sampler_MetallicGlossMap, baseUV);
         metallic = mr.r;
         smoothness = mr.a;
+    #endif
+    #if defined(_DETAIL_HDRP)
+        smoothness = BW_ApplyHDRPDetailSmoothness(smoothness, hdrpDetailMap, hdrpDetailMask);
     #endif
     BW_AlbedoSpecularFromMetallic(albedo, metallic, reflectance);
     perceptualRoughness = half(1.0) - saturate(smoothness * _SpecMod);
@@ -427,6 +453,15 @@ half4 BWFrag(Varyings input, FRONT_FACE_TYPE frontFace : FRONT_FACE_SEMANTIC) : 
                                           input.lastClipPos, input.positionWS, viewDirWS, input.fogFactor);
     #else
         colorRGB += ssrContribution;
+    #endif
+#endif
+
+#if defined(_ALPHAMOD2X_ON)
+    // BONELAB SLZ/Mod2x controls: scale contrast around the neutral 0.5 blend color,
+    // then optionally use source alpha to fade the effect back toward neutral.
+    colorRGB = (colorRGB - half3(0.5,0.5,0.5)) * _Multiplier + half3(0.5,0.5,0.5);
+    #if defined(_ALPHA_ON)
+        colorRGB = lerp(half3(0.5,0.5,0.5), colorRGB, saturate(mod2xSourceAlpha));
     #endif
 #endif
 

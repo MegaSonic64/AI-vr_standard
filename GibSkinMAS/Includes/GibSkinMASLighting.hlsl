@@ -302,6 +302,11 @@ inline BWEnvironmentSpecularResult BW_EnvironmentSpecular(
     half3 iblFactor = fresnel * g_flCubeMapScalar;
     result.probe = environment * iblFactor;
     result.ssr *= iblFactor;
+
+    // Optional SLZ/Filament specular horizon occlusion against the true geometric surface.
+    half horizonOcclusion = lerp(half(1.0), SLZSpecularHorizonOcclusion(geometricNormalWS, reflectionDir), saturate(_SpecularHorizonOcclusion));
+    result.probe *= horizonOcclusion;
+    result.ssr *= horizonOcclusion;
 #endif
     return result;
 }

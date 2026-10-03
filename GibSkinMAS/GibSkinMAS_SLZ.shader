@@ -42,6 +42,7 @@ Shader "SLZ/Valve/GibSkinMAS"
         [Toggle(_NO_SSR)] _SSROff("Disable SSR", Float) = 0
         _SSRTemporalMul("Temporal Accumulation Factor", Range(0,2)) = 0.0
 
+        [HideInInspector]_SpecularHorizonOcclusion("SLZ Specular Horizon Occlusion", Float) = 1
         [HideInInspector]_Surface("Surface Type", Float) = 0
         [HideInInspector]_Cull("Cull", Float) = 2
     }
@@ -241,4 +242,5 @@ Shader "SLZ/Valve/GibSkinMAS"
     }
 
     FallBack Off
+    CustomEditor "GibSkinMASGUI"
 }

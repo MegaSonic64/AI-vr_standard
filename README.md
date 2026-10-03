@@ -1,4 +1,4 @@
-# SLZ-URP 2021 BONEWORKS AI Shader Ports
+# SLZ-URP 2021 BONEWORKS Shader Ports
 
 Unity `2021.3.16f1` shader ports/reconstructions targeting Stress Level Zero's Custom URP 2021 renderer.
 
@@ -26,6 +26,7 @@ ai_vr_standard/
 GibSkinMAS/
     GibSkinMAS_SLZ.shader
     Includes/
+    Editor/
     README.md
     CHANGELOG.md
 ```
@@ -45,6 +46,13 @@ SLZ/LitMAS infrastructure is used for renderer-facing systems such as:
 - Valve/LitMAS geometric specular anti-aliasing.
 
 The Vulkan/mobile path keeps the SLZ-style split of one per-pixel main/directional light with additional point/spot lights evaluated at the vertex level.
+
+## Revision 3 highlights
+
+- `ai_vr_standard` adds a **HDRP** Detail Blend Mode using LitMAS/HDRP packed detail channels: **R albedo overlay, G normal Y, B smoothness multiplier, A normal X**. The Forward pass samples the packed detail texture once and reuses it for albedo, normal, and smoothness.
+- `ai_vr_standard` Mod2x mode adds the BONELAB `SLZ/Mod2x` **Multiplier** and **Alpha** controls. Multiplier scales the final Mod2x source around neutral `0.5`; Alpha uses the source texture/material/vertex alpha to fade the result back toward neutral `0.5`.
+- `ai_vr_standard` and `GibSkinMAS` add a **SLZ Specular Horizon Occlusion** toggle directly below Render Queue. It defaults on and attenuates reflection-probe and SSR specular rays that dip below the geometric surface horizon.
+- The horizon toggle is runtime shader data only; the new GibSkin editor GUI only exposes the control in the requested inspector location. No runtime scripts are required.
 
 ## Revision 2 highlights
 
@@ -66,4 +74,4 @@ See each shader's README and changelog for details.
 - Stress Level Zero Custom URP: https://github.com/StressLevelZero/Custom-URP
 - Kevin Comerford / zero_lab_renderer: https://github.com/KevinComerford/zero_lab_renderer
 
-The shader is provided "as is" and will not be actively supported. - MegaSonic64
+No license is added by this package; review the upstream source licenses and your own distribution requirements before publishing derivative work.

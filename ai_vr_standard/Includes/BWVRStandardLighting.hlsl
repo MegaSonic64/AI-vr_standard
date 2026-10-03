@@ -297,6 +297,12 @@ inline BWEnvironmentSpecularResult BW_EnvironmentSpecular(
     half3 iblFactor = fresnel * g_flCubeMapScalar;
     result.probe = environment * iblFactor;
     result.ssr *= iblFactor;
+
+    // Optional SLZ/Filament specular horizon occlusion. Use the geometric normal so
+    // normal-map or anisotropic reflection rays that dip below the true surface are faded.
+    half horizonOcclusion = lerp(half(1.0), SLZSpecularHorizonOcclusion(geometricNormalWS, reflectionDir), saturate(_SpecularHorizonOcclusion));
+    result.probe *= horizonOcclusion;
+    result.ssr *= horizonOcclusion;
 #endif
     return result;
 }

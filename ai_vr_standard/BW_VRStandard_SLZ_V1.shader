@@ -74,6 +74,9 @@ Shader "SLZ/Valve/ai_vr_standard"
         [HideInInspector] _OffsetFactor("__fac", Float) = 0
         [HideInInspector] _OffsetUnits("__units", Float) = 0
         [HideInInspector] _ColorMultiplier("target color", Float) = 0
+        [HideInInspector] _Multiplier("Multiplier", Float) = 1
+        [HideInInspector][Toggle(_ALPHA_ON)] _alpha("Alpha", Float) = 0
+        [HideInInspector] _SpecularHorizonOcclusion("SLZ Specular Horizon Occlusion", Float) = 1
         [HideInInspector] _Surface("__surface", Int) = 0
         [HideInInspector][Toggle(_NO_SSR)] _SSROff("Disable SSR", Float) = 0
         [HideInInspector] _SSRTemporalMul("Temporal Accumulation Factor", Range(0, 2)) = 1.0
@@ -105,12 +108,14 @@ Shader "SLZ/Valve/ai_vr_standard"
             #pragma shader_feature _ALPHAPREMULTIPLY_ON
             #pragma shader_feature _ALPHAMULTIPLY_ON
             #pragma shader_feature _ALPHAMOD2X_ON
+            #pragma shader_feature _ALPHA_ON
             #pragma shader_feature _EMISSION
             #pragma shader_feature S_EMISSIVE_MULTI
             #pragma shader_feature _DETAIL_MULX2
             #pragma shader_feature _DETAIL_MUL
             #pragma shader_feature _DETAIL_ADD
             #pragma shader_feature _DETAIL_LERP
+            #pragma shader_feature _DETAIL_HDRP
             #if !defined(SHADER_API_MOBILE)
                 #pragma shader_feature _PARALLAXMAP
             #endif
@@ -213,6 +218,7 @@ Shader "SLZ/Valve/ai_vr_standard"
             #pragma shader_feature _DETAIL_MUL
             #pragma shader_feature _DETAIL_ADD
             #pragma shader_feature _DETAIL_LERP
+            #pragma shader_feature _DETAIL_HDRP
             #pragma multi_compile_instancing
             #pragma instancing_options renderinglayer
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/PlatformCompiler.hlsl"
@@ -254,6 +260,7 @@ Shader "SLZ/Valve/ai_vr_standard"
             #pragma shader_feature _EMISSION
             #pragma shader_feature S_EMISSIVE_MULTI
             #pragma shader_feature _DETAIL_MULX2
+            #pragma shader_feature _DETAIL_HDRP
             #pragma shader_feature S_PACKING_MAES
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/PlatformCompiler.hlsl"
             #include "Includes/BWVRStandardMeta.hlsl"
@@ -300,12 +307,14 @@ Shader "SLZ/Valve/ai_vr_standard"
             #pragma shader_feature _ALPHAPREMULTIPLY_ON
             #pragma shader_feature _ALPHAMULTIPLY_ON
             #pragma shader_feature _ALPHAMOD2X_ON
+            #pragma shader_feature _ALPHA_ON
             #pragma shader_feature _EMISSION
             #pragma shader_feature S_EMISSIVE_MULTI
             #pragma shader_feature _DETAIL_MULX2
             #pragma shader_feature _DETAIL_MUL
             #pragma shader_feature _DETAIL_ADD
             #pragma shader_feature _DETAIL_LERP
+            #pragma shader_feature _DETAIL_HDRP
             #if !defined(SHADER_API_MOBILE)
                 #pragma shader_feature _PARALLAXMAP
             #endif
@@ -408,6 +417,7 @@ Shader "SLZ/Valve/ai_vr_standard"
             #pragma shader_feature _DETAIL_MUL
             #pragma shader_feature _DETAIL_ADD
             #pragma shader_feature _DETAIL_LERP
+            #pragma shader_feature _DETAIL_HDRP
             #pragma multi_compile_instancing
             #pragma instancing_options renderinglayer
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/PlatformCompiler.hlsl"
@@ -449,6 +459,7 @@ Shader "SLZ/Valve/ai_vr_standard"
             #pragma shader_feature _EMISSION
             #pragma shader_feature S_EMISSIVE_MULTI
             #pragma shader_feature _DETAIL_MULX2
+            #pragma shader_feature _DETAIL_HDRP
             #pragma shader_feature S_PACKING_MAES
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/PlatformCompiler.hlsl"
             #include "Includes/BWVRStandardMeta.hlsl"

@@ -1,5 +1,24 @@
 # Changelog
 
+## Revision 3 — 2026-10-02
+
+### Shared
+
+- Added **SLZ Specular Horizon Occlusion** as a material toggle below Render Queue in both shader inspectors.
+- Horizon occlusion defaults on and applies SLZ's `SLZSpecularHorizonOcclusion()` to reflection-probe and SSR contributions using the geometric normal.
+
+### ai_vr_standard
+
+- Added **HDRP** to Detail Blend Modes using LitMAS/HDRP packing: R = albedo overlay, G = normal Y, B = smoothness multiplier, A = normal X.
+- Reuses the packed detail sample across albedo, normal, and smoothness in the Forward pass; the existing Detail Mask still controls the packed effect.
+- Added BONELAB `SLZ/Mod2x` **Multiplier** and **Alpha** controls to Mod2x rendering mode.
+- Mod2x Multiplier scales around neutral `0.5`; Alpha lerps the result toward `0.5` using source texture/material alpha multiplied by vertex alpha, matching the BONELAB shader behavior.
+
+### GibSkinMAS
+
+- Added an editor-only `GibSkinMASGUI` so the horizon-occlusion toggle appears immediately below Render Queue while retaining the normal material controls.
+- No runtime script dependency was added.
+
 ## Revision 2 — 2026-09-30
 
 ### Shared

@@ -34,10 +34,23 @@ The shader keeps the original BONEWORKS material/BRDF behavior where practical w
 - BRDF LUT remapping.
 - Fluorescence and absorbance.
 - Emission and view falloff.
-- Detail albedo/detail normals with Multiply2x, Multiply, Add, and Lerp modes.
+- Detail albedo/detail normals with Multiply2x, Multiply, Add, Lerp, and LitMAS/HDRP packed-detail modes.
 - Separate AO influence controls for direct/indirect diffuse/specular.
 - World-aligned planar mapping.
 - Cast Shadows, Receive Shadows, Render Backfaces, depth offset, and smoothness scaling.
+
+## Detail blend modes
+
+The original BONEWORKS detail modes remain available, and Revision 3 adds **HDRP** packing based on LitMAS' detail-map path.
+
+| HDRP detail channel | Meaning |
+| --- | --- |
+| R | Albedo overlay |
+| G | Detail normal Y |
+| B | Smoothness multiplier (`2 * B`) |
+| A | Detail normal X |
+
+The existing **Detail Mask** is applied to albedo, packed detail normal, and packed smoothness. In the Forward pass the HDRP detail texture is sampled once and reused for all three operations. The existing detail texture scale/offset and UV0/UV1 selection remain in use.
 
 ## Texture packing
 
@@ -52,6 +65,15 @@ The shader keeps the original BONEWORKS material/BRDF behavior where practical w
 | Alloy | Metallic | AO | Unused | Roughness |
 
 Roughness-packed modes are inverted internally to smoothness. MAES is the only packed mode that supplies emission.
+
+## Mod2x controls
+
+When **Rendering Mode = Mod2x**, the inspector exposes the BONELAB `SLZ/Mod2x` controls:
+
+- **Multiplier** — scales the shader output around Mod2x neutral gray (`0.5`): `(color - 0.5) * Multiplier + 0.5`.
+- **Alpha** — when enabled, fades that result toward neutral `0.5` using the original Mod2x source alpha. The source alpha is base texture alpha × material color alpha × vertex alpha, matching BONELAB's Mod2x behavior where vertex alpha remains part of the mask even when RGB vertex tint is disabled.
+
+The existing `Blend DstColor SrcColor` rendering state remains unchanged.
 
 ## BONEWORKS BRDF policy
 
@@ -134,6 +156,10 @@ Revision 2 fixes the **dynamic-lightmap-only** variant. `SLZGetLightmapLighting(
 - No probe blending or box projection.
 
 The screen-space dither hash remains FP32 on Vulkan to prevent FP16 overflow -> INF/NaN black-screen failures.
+
+## SLZ Specular Horizon Occlusion
+
+A **SLZ Specular Horizon Occlusion** toggle is shown directly below **Render Queue** and defaults on. It applies SLZ's `SLZSpecularHorizonOcclusion()` to reflection-probe and SSR contributions using the geometric normal, reducing invalid reflection rays that point below the actual mesh surface. Disable it for legacy comparison or materials that intentionally rely on those grazing reflections.
 
 ## SSR
 

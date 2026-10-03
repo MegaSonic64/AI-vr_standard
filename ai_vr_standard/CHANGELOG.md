@@ -1,5 +1,28 @@
 # Changelog — ai_vr_standard
 
+## Revision 3 — 2026-10-02
+
+### Detail mapping
+
+- Added **HDRP** as a fifth Detail Blend Mode.
+- Matches LitMAS/HDRP packing: R albedo overlay, G normal Y, B smoothness multiplier, A normal X.
+- Keeps the existing Detail Mask and detail UV transform/UV-set controls.
+- Forward rendering samples the HDRP detail texture once and reuses it for albedo, detail normal, and smoothness.
+- DepthNormals and Meta variants compile the new detail mode where relevant.
+
+### Mod2x
+
+- Added BONELAB `SLZ/Mod2x` **Multiplier** and **Alpha** controls when Rendering Mode is Mod2x.
+- Multiplier remaps around neutral `0.5`.
+- Alpha fades the remapped result toward `0.5` using base texture/material alpha × vertex alpha.
+- Preserves the existing `DstColor / SrcColor` blend mode.
+
+### Specular horizon occlusion
+
+- Added **SLZ Specular Horizon Occlusion** toggle directly below Render Queue.
+- Defaults on.
+- Applies SLZ horizon occlusion to reflection-probe and SSR specular using the geometric normal.
+
 ## Revision 2 — 2026-09-30
 
 ### Rendering fixes

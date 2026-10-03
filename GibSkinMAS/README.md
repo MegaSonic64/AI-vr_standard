@@ -105,6 +105,12 @@ SLZGeometricSpecularAA(...)
 
 The geometric normal is used. Retroreflective bypasses geometric roughness filtering, matching original BONEWORKS behavior. Spec AA is compiled out on mobile.
 
+## SLZ Specular Horizon Occlusion
+
+Revision 3 adds a **SLZ Specular Horizon Occlusion** toggle immediately below **Render Queue**. It defaults on and applies `SLZSpecularHorizonOcclusion()` to reflection-probe and SSR contributions using the geometric normal. This suppresses environment/reflection rays that dip below the actual mesh surface while leaving the BONEWORKS direct-light BRDF unchanged.
+
+The custom `GibSkinMASGUI` used to place the control is editor-only; it adds no runtime script dependency.
+
 ## SSR
 
 Desktop SLZ SSR remains supported.

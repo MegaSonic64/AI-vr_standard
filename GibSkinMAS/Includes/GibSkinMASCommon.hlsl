@@ -42,6 +42,7 @@ half _DetailNormalMapScale;
 half g_flFresnelFalloff;
 half g_flFresnelExponent;
 half g_flCubeMapScalar;
+half _SpecularHorizonOcclusion;
 int _NumberOfHits;
 int _NumberOfElipsoids;
 int _Surface;

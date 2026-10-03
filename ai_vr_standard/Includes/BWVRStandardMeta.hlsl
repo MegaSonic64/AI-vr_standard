@@ -49,11 +49,16 @@ half4 BWMetaFrag(Varyings input) : SV_Target
     half4 baseSample = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv) * _Color;
     half3 albedo = baseSample.rgb;
 
-#if defined(_DETAIL_MULX2)
+#if defined(_DETAIL_MULX2) || defined(_DETAIL_HDRP)
     half mask = BW_DetailMask(input.uv);
     float2 detailUV = input.uv * _DetailAlbedoMap_ST.xy + _DetailAlbedoMap_ST.zw;
-    half3 detail = SAMPLE_TEXTURE2D(_DetailAlbedoMap, sampler_DetailAlbedoMap, detailUV).rgb;
-    albedo *= lerp(half3(1,1,1), detail * BW_COLORSPACE_DOUBLE_RGB, mask);
+    #if defined(_DETAIL_HDRP)
+        half4 detailMap = SAMPLE_TEXTURE2D(_DetailAlbedoMap, sampler_DetailAlbedoMap, detailUV);
+        albedo = BW_ApplyHDRPDetailAlbedo(albedo, detailMap, mask);
+    #else
+        half3 detail = SAMPLE_TEXTURE2D(_DetailAlbedoMap, sampler_DetailAlbedoMap, detailUV).rgb;
+        albedo *= lerp(half3(1,1,1), detail * BW_COLORSPACE_DOUBLE_RGB, mask);
+    #endif
 #endif
 
     half packedEmission = 1.0h;

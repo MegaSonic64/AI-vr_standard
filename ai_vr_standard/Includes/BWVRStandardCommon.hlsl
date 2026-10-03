@@ -22,7 +22,7 @@
     #define BW_COLORSPACE_DOUBLE_RGB half3(4.59479380h, 4.59479380h, 4.59479380h)
 #endif
 
-#if defined(_DETAIL_MULX2) || defined(_DETAIL_MUL) || defined(_DETAIL_ADD) || defined(_DETAIL_LERP)
+#if defined(_DETAIL_MULX2) || defined(_DETAIL_MUL) || defined(_DETAIL_ADD) || defined(_DETAIL_LERP) || defined(_DETAIL_HDRP)
     #define BW_DETAIL_ON 1
 #endif
 
@@ -95,6 +95,9 @@ half _Mode;
 int _Surface;
 half _FogMultiplier;
 half _ColorMultiplier;
+half _Multiplier;
+half _alpha;
+half _SpecularHorizonOcclusion;
 half _Test;
 float _OffsetFactor;
 float _OffsetUnits;
@@ -183,19 +186,54 @@ inline void BW_AlbedoSpecularFromMetallic(inout half3 albedo, half metallic, out
     albedo *= oneMinusReflectivity;
 }
 
+inline half3 BW_OverlayBlendDetail(half source, half3 destination)
+{
+    // Exact LitMAS/HDRP-style overlay packing path.
+    half3 switch0 = round(destination);
+    half3 blendGreater = mad(mad(half(2.0), destination, half(-2.0)), half(1.0) - source, half(1.0));
+    half3 blendLesser = (half(2.0) * source) * destination;
+    return mad(switch0, blendGreater, mad(-switch0, blendLesser, blendLesser));
+}
+
+inline half3 BW_ApplyHDRPDetailAlbedo(half3 albedo, half4 detailMap, half mask)
+{
+    half3 detailed = BW_OverlayBlendDetail(detailMap.r, albedo);
+    return lerp(albedo, detailed, mask);
+}
+
+inline half3 BW_ApplyHDRPDetailNormal(half3 normalTS, half4 detailMap, half mask)
+{
+    // LitMAS/HDRP detail packing: A = normal X, G = normal Y.
+    half3 detailTS = half3(half(2.0) * detailMap.ag - half(1.0), half(1.0));
+    half3 blended = BlendNormal(normalTS, detailTS);
+    return normalize(lerp(normalTS, blended, mask));
+}
+
+inline half BW_ApplyHDRPDetailSmoothness(half smoothness, half4 detailMap, half mask)
+{
+    // LitMAS uses smoothness *= (2 * B), saturated. Preserve ai_vr_standard's detail mask.
+    half detailed = saturate(half(2.0) * detailMap.b * smoothness);
+    return lerp(smoothness, detailed, mask);
+}
+
 inline half3 BW_ApplyDetailAlbedo(half3 albedo, float2 baseUV, float2 detailUV)
 {
 #if defined(BW_DETAIL_ON)
     half mask = BW_DetailMask(baseUV);
-    half3 detail = SAMPLE_TEXTURE2D(_DetailAlbedoMap, sampler_DetailAlbedoMap, detailUV).rgb;
-    #if defined(_DETAIL_MULX2)
-        albedo *= lerp(half3(1,1,1), detail * BW_COLORSPACE_DOUBLE_RGB, mask);
-    #elif defined(_DETAIL_MUL)
-        albedo *= lerp(half3(1,1,1), detail, mask);
-    #elif defined(_DETAIL_ADD)
-        albedo += detail * mask;
-    #elif defined(_DETAIL_LERP)
-        albedo = lerp(albedo, detail, mask);
+    #if defined(_DETAIL_HDRP)
+        half4 detailMap = SAMPLE_TEXTURE2D(_DetailAlbedoMap, sampler_DetailAlbedoMap, detailUV);
+        albedo = BW_ApplyHDRPDetailAlbedo(albedo, detailMap, mask);
+    #else
+        half3 detail = SAMPLE_TEXTURE2D(_DetailAlbedoMap, sampler_DetailAlbedoMap, detailUV).rgb;
+        #if defined(_DETAIL_MULX2)
+            albedo *= lerp(half3(1,1,1), detail * BW_COLORSPACE_DOUBLE_RGB, mask);
+        #elif defined(_DETAIL_MUL)
+            albedo *= lerp(half3(1,1,1), detail, mask);
+        #elif defined(_DETAIL_ADD)
+            albedo += detail * mask;
+        #elif defined(_DETAIL_LERP)
+            albedo = lerp(albedo, detail, mask);
+        #endif
     #endif
 #endif
     return albedo;
@@ -205,11 +243,16 @@ inline half3 BW_ApplyDetailNormal(half3 normalTS, float2 baseUV, float2 detailUV
 {
 #if defined(BW_DETAIL_ON) && defined(_NORMALMAP)
     half mask = BW_DetailMask(baseUV);
-    half3 detailTS = UnpackNormalScale(SAMPLE_TEXTURE2D(_DetailNormalMap, sampler_DetailNormalMap, detailUV), _DetailNormalMapScale);
-    #if defined(_DETAIL_LERP)
-        normalTS = normalize(lerp(normalTS, detailTS, mask));
+    #if defined(_DETAIL_HDRP)
+        half4 detailMap = SAMPLE_TEXTURE2D(_DetailAlbedoMap, sampler_DetailAlbedoMap, detailUV);
+        normalTS = BW_ApplyHDRPDetailNormal(normalTS, detailMap, mask);
     #else
-        normalTS = normalize(lerp(normalTS, BlendNormal(normalTS, detailTS), mask));
+        half3 detailTS = UnpackNormalScale(SAMPLE_TEXTURE2D(_DetailNormalMap, sampler_DetailNormalMap, detailUV), _DetailNormalMapScale);
+        #if defined(_DETAIL_LERP)
+            normalTS = normalize(lerp(normalTS, detailTS, mask));
+        #else
+            normalTS = normalize(lerp(normalTS, BlendNormal(normalTS, detailTS), mask));
+        #endif
     #endif
 #endif
     return normalTS;
